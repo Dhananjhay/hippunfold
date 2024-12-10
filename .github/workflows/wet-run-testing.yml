@@ -38,7 +38,7 @@ jobs:
       
       - name: Generate sub_volumes.tsv
         run: |
-          poetry run hippunfold lowresMRI test-lowresMRI participant --participant_label 01 --modality T1w $DENS $RUNOPTS
+          poetry run hippunfold lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w $DENS $RUNOPTS
 
       - name: Compare sub_volumes.tsv with the baseline configuration
         run: |

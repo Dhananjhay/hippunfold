@@ -12,9 +12,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: neurodebian
+      image: neurodebian:latest
 
     steps:
+      - name: Update packages
+        run: |
+          apt-get update -qqq && $ apt-cache policy singularity-container
+
       - name: Run Singularity command
         run: |
           singularity --version

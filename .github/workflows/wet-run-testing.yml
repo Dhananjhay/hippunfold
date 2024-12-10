@@ -22,11 +22,6 @@ jobs:
         with:
           python-version: 3.9
           install-library: true
-
-      - name: Setup env for hippunfold
-        run: |
-          echo "DENS='--output_density 0p5mm 1mm 2mm unfoldiso'" >> $GITHUB_ENV
-          echo "RUNOPTS='--use-singularity --cores all -p'" >> $GITHUB_ENV
       
       - name: Download folder from URL
         run: |
@@ -38,7 +33,7 @@ jobs:
       
       - name: Generate sub_volumes.tsv
         run: |
-          poetry run hippunfold lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w $DENS $RUNOPTS
+          poetry run hippunfold lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w --output_density 0p5mm 1mm 2mm unfoldiso --use-singularity --cores all -p
 
       - name: Compare sub_volumes.tsv with the baseline configuration
         run: |

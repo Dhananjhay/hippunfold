@@ -11,8 +11,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: sylabs/singularity:latest
 
     steps:
+      - name: Run Singularity command
+        run: |
+          singularity --version
+
       - name: Install non-python dependencies
         run: |
           sudo apt-get install -y graphviz-dev unzip wget

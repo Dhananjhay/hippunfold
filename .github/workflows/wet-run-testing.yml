@@ -12,7 +12,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: sylabs/singularity:latest
+      image: neurodebian
 
     steps:
       - name: Run Singularity command

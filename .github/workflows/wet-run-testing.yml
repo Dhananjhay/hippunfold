@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Install non-python dependencies
         run: |
-          sudo apt-get install -y graphviz-dev unzip wget
+          sudo apt-get install -y graphviz-dev
 
       - name: Setup Python environment
         uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.3.2
@@ -23,25 +23,15 @@ jobs:
           python-version: 3.9
           install-library: true
 
-      # Step 3: Setup Singularity
       - name: Install Singularity
         uses: eWaterCycle/setup-singularity@v7
         with:
-          singularity-version: 3.8.3
-      
-      - name: Download folder from URL
-        run: |
-          wget "https://files.ca-1.osf.io/v1/resources/k2nme/providers/osfstorage/66759a948dfe890189cb7178/?zip=" -O lowresMRI.zip
-
-      - name: Unzip downloaded folder
-        run: |
-          unzip lowresMRI.zip -d lowresMRI
-          rm lowresMRI.zip
+          singularity-version: 3.8.3 
       
       - name: Generate sub_volumes.tsv
         run: |
-          poetry run hippunfold lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w --output_density 0p5mm 1mm 2mm unfoldiso --use-singularity --cores all -p
+          poetry run hippunfold test_data/lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w --output_density 0p5mm 1mm 2mm unfoldiso --use-singularity --cores all -p
 
       - name: Compare sub_volumes.tsv
         run: |
-          diff test_data/lowresMRI/sub-01/anat/sub-01_space-cropT1w_desc-subfields_atlas-multihist7_volumes.tsv test-lowresMRI/hippunfold/sub-01/anat/sub-01_space-cropT1w_desc-subfields_atlas-multihist7_volumes.tsv
+          diff test_result/lowresMRI/sub-01/anat/sub-01_space-cropT1w_desc-subfields_atlas-multihist7_volumes.tsv test-lowresMRI/hippunfold/sub-01/anat/sub-01_space-cropT1w_desc-subfields_atlas-multihist7_volumes.tsv

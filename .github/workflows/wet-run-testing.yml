@@ -30,7 +30,7 @@ jobs:
       
       - name: Generate sub_volumes.tsv
         run: |
-          poetry run hippunfold test_data/lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w --output_density 0p5mm 1mm 2mm unfoldiso --use-singularity --cores all -p
+          poetry run hippunfold test_data/lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w --output_density 0p5mm 1mm 2mm unfoldiso --until get_subfield_vols_subj --use-singularity --cores all -p
 
       - name: Compare sub_volumes.tsv
         run: |

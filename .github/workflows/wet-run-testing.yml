@@ -11,18 +11,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: neurodebian:latest
 
     steps:
-      - name: Update packages
-        run: |
-          apt-get update -qqq && $ apt-cache policy singularity-container
-
-      - name: Run Singularity command
-        run: |
-          singularity --version
-
       - name: Install non-python dependencies
         run: |
           sudo apt-get install -y graphviz-dev unzip wget
@@ -32,6 +22,12 @@ jobs:
         with:
           python-version: 3.9
           install-library: true
+
+      # Step 3: Setup Singularity
+      - name: Install Singularity
+        uses: eWaterCycle/setup-singularity@v7
+        with:
+          singularity-version: 3.8.3
       
       - name: Download folder from URL
         run: |
@@ -43,8 +39,14 @@ jobs:
       
       - name: Generate sub_volumes.tsv
         run: |
-          poetry run hippunfold lowresMRI test-lowresMRI participant --participant-label 01 --modality T1w --output_density 0p5mm 1mm 2mm unfoldiso --use-singularity --cores all -p
+          poetry run hippunfold lowresMRI test-lowresMRI participant \ 
+            --participant-label 01 \
+            --modality T1w \
+            --output_density 0p5mm 1mm 2mm unfoldiso \
+            --use-singularity \
+            --cores all \
+            -p
 
-      - name: Compare sub_volumes.tsv with the baseline configuration
+      - name: Compare sub_volumes.tsv
         run: |
           diff test_data/lowresMRI/sub-01/anat/sub-01_space-cropT1w_desc-subfields_atlas-multihist7_volumes.tsv test-lowresMRI/hippunfold/sub-01/anat/sub-01_space-cropT1w_desc-subfields_atlas-multihist7_volumes.tsv

@@ -36,6 +36,7 @@ jobs:
       - name: Unzip downloaded folder
         run: |
           unzip lowresMRI.zip -d lowresMRI
+          rm lowresMRI.zip
       
       - name: Generate sub_volumes.tsv
         run: |

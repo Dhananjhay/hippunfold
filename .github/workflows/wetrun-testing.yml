@@ -2,8 +2,6 @@ name: Hippunfold PR Wet-Run
 
 on:
   workflow_dispatch:
-    branches: 
-    - dev-v2.0.0
     inputs:
       pr_number:
         description: 'The Pull Request number to test'

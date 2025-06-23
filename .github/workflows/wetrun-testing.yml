@@ -1,6 +1,9 @@
 name: Hippunfold PR Wet-Run
 
 on:
+  push:
+    branches:
+      - dev-v2.0.0
   workflow_dispatch:
     inputs:
       pr_number:
@@ -8,8 +11,6 @@ on:
         required: true
         default: '1'
 
-permissions:
-  contents: read
 
 env:
   OS_AUTH_URL:             ${{ secrets.OS_AUTH_URL }}

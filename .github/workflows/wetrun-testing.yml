@@ -28,6 +28,9 @@ jobs:
   arbutus-test:
     runs-on: ubuntu-latest
 
+    env:
+      PR_NUMBER: ${{ github.event.inputs.pr_number }}
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -38,16 +41,12 @@ jobs:
         sudo apt-get install -y python3-openstackclient jq gettext-base
 
     - name: Generate per-PR cloud-init
-      env:
-        PR_NUMBER: ${{ github.event.inputs.pr_number }}
       run: |
         envsubst '${PR_NUMBER}' < cloud-init.yml \
           > cloud-init.generated.yml
 
     - name: Launch Arbutus VM for PR #${{ github.event.inputs.pr_number }}
       id: launch
-      env:
-        PR_NUMBER: ${{ github.event.inputs.pr_number }}
       run: |
         openstack server create \
           --image "Ubuntu-22.04.4-Jammy-x64-2024-06" \

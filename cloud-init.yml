@@ -1,0 +1,49 @@
+#cloud-config
+---
+hostname: hippunfold-pr-${PR_NUMBER}
+
+write_files:
+  - path: /tmp/start.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -e
+      export HOME=/mnt/runner
+      mkdir -p "$HOME"
+      cd $HOME
+
+      # Install Miniconda
+      curl -sSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
+      bash miniconda.sh -b -p $HOME/miniconda
+      export PATH=$HOME/miniconda/bin:$PATH
+
+      conda config --set always_yes yes --set changeps1 no
+      conda update -q conda
+      conda install -n base -c conda-forge mamba
+      conda create -q -n hippunfold python=3.12 snakebids -c bioconda -c conda-forge
+      source $HOME/miniconda/bin/activate hippunfold
+
+      git clone https://github.com/khanlab/Hippunfold $HOME/repo
+      cd $HOME/repo
+      git checkout dev-v2.0.0
+      # git fetch origin pull/${PR_NUMBER}/head:pr-${PR_NUMBER}
+      # git checkout pr-${PR_NUMBER}
+
+      # Prepare input data directory
+      mkdir -p $HOME/data
+      cd $HOME/data
+      wget -q -O lowresMRI.zip "https://files.ca-1.osf.io/v1/resources/k2nme/providers/osfstorage/66759a948dfe890189cb7178/?zip="
+      unzip -q lowresMRI.zip -d lowresMRI
+
+      # Run wet run test
+      cd $HOME/repo
+      ./hippunfold/run.py ../data/lowresMRI derivatives/ participant --participant-label 01 --modality T1w --cores all 
+
+runcmd:
+  - apt-get update
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y curl git wget unzip
+  - useradd -m runner || true
+  - chown -R runner:runner /mnt
+  - cp /tmp/start.sh /mnt/start.sh
+  - chown runner:runner /mnt/start.sh
+  - su - runner -c "/mnt/start.sh"

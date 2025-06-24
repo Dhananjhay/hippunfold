@@ -51,7 +51,7 @@ jobs:
         export GITHUB_RUNNER_TOKEN=${{ steps.token.outputs.token }}
         export GITHUB_REPO_OWNER=${{ github.repository_owner }}
         export GITHUB_REPO_NAME=${{ github.repository_name }}
-        envsubst < cloud-init-runner.yml > cloud-init.generated.yml
+        envsubst < cloud-init.yml > cloud-init.generated.yml
 
     - name: Launch VM
       id: launch

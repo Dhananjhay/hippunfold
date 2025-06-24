@@ -4,10 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'Pull Request number'
-        required: true
 
 permissions:
   contents: read
@@ -28,6 +24,10 @@ env:
 jobs:
   launch-runner:
     runs-on: ubuntu-latest
+
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
     outputs:
       vm_id: ${{ steps.launch.outputs.vm_id }}
       runner_token: ${{ steps.token.outputs.token }}
@@ -37,7 +37,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y python3-openstackclient jq gettext-base
-        
+
     - name: Checkout
       uses: actions/checkout@v4
 
@@ -52,10 +52,10 @@ jobs:
 
     - name: Generate cloud-init
       run: |
-        export PR_NUMBER=${{ github.event.inputs.pr_number }}
+        export PR_NUMBER=${PR_NUMBER}
         export GITHUB_RUNNER_TOKEN=${{ steps.token.outputs.token }}
         export GITHUB_REPO_OWNER=${{ github.repository_owner }}
-        export GITHUB_REPO_NAME=${{ github.repository_name }}
+        export GITHUB_REPO_NAME=${{ github.repository }}
         envsubst < cloud-init.yml > cloud-init.generated.yml
 
     - name: Launch VM
@@ -66,8 +66,8 @@ jobs:
           --flavor c16-120gb-576 \
           --network def-akhanf-dev-network \
           --user-data cloud-init.generated.yml \
-          hippunfold-pr-${{ github.event.inputs.pr_number }}
-        VM_ID=$(openstack server list --name hippunfold-pr-${{ github.event.inputs.pr_number }} -f value -c ID)
+          hippunfold-pr-${PR_NUMBER}
+        VM_ID=$(openstack server list --name hippunfold-pr-${PR_NUMBER} -f value -c ID)
         echo "::set-output name=vm_id::$VM_ID"
 
     - name: Wait for runner registration
@@ -77,7 +77,7 @@ jobs:
           runners=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/actions/runners \
             | jq -r '.runners[].name')
-          if echo "$runners" | grep -q "runner-${{ github.event.inputs.pr_number }}"; then
+          if echo "$runners" | grep -q "runner-${PR_NUMBER}"; then
             echo "Runner registered."
             exit 0
           fi
@@ -97,8 +97,9 @@ jobs:
 
     - name: Fetch PR & run wet run
       run: |
-        git fetch origin pull/${{ github.event.inputs.pr_number }}/head:pr-${{ github.event.inputs.pr_number }}
-        git checkout pr-${{ github.event.inputs.pr_number }}
+        PR=${{ github.event.pull_request.number }}
+        git fetch origin pull/${PR}/head:pr-${PR}
+        git checkout pr-${PR}
         ./hippunfold/run.py ../data/lowresMRI derivatives/ participant --participant-label 01 --modality T1w --cores all
 
   cleanup:

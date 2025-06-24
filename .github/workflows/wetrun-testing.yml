@@ -33,6 +33,11 @@ jobs:
       runner_token: ${{ steps.token.outputs.token }}
 
     steps:
+    - name: Install Openstack CLI & tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-openstackclient jq gettext-base
+        
     - name: Checkout
       uses: actions/checkout@v4
 

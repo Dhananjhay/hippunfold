@@ -1,49 +1,39 @@
-#cloud-config
----
+# cloud-config
 hostname: hippunfold-pr-${PR_NUMBER}
 
 write_files:
-  - path: /tmp/start.sh
+  - path: /home/ubuntu/setup-runner.sh
     permissions: '0755'
+    owner: ubuntu:ubuntu
     content: |
       #!/bin/bash
-      set -e
-      export HOME=/mnt/runner
-      mkdir -p "$HOME"
-      cd $HOME
+      set -eux
+      GH_OWNER="${GITHUB_REPO_OWNER}"
+      GH_REPO="${GITHUB_REPO_NAME}"
+      GH_TOKEN="${GITHUB_RUNNER_TOKEN}"
+      LABELS="ephemeral,wet-run"
+      RUNNER_DIR=/home/ubuntu/actions-runner
 
-      # Install Miniconda
-      curl -sSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
-      bash miniconda.sh -b -p $HOME/miniconda
-      export PATH=$HOME/miniconda/bin:$PATH
+      # Install dependencies
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y curl wget git libicu-dev libssl-dev jq
 
-      conda config --set always_yes yes --set changeps1 no
-      conda update -q conda
-      conda install -n base -c conda-forge mamba
-      conda create -q -n hippunfold python=3.12 snakebids -c bioconda -c conda-forge
-      source $HOME/miniconda/bin/activate hippunfold
+      # Download and extract the runner
+      mkdir -p "$RUNNER_DIR" && cd "$RUNNER_DIR"
+      curl -fsSL -o runner.tar.gz \
+        https://github.com/actions/runner/releases/latest/download/actions-runner-linux-x64.tar.gz
+      tar xzf runner.tar.gz
 
-      git clone https://github.com/khanlab/Hippunfold $HOME/repo
-      cd $HOME/repo
-      git checkout dev-v2.0.0
-      # git fetch origin pull/${PR_NUMBER}/head:pr-${PR_NUMBER}
-      # git checkout pr-${PR_NUMBER}
+      # Configure runner (unattended)
+      ./config.sh --unattended \
+        --url https://github.com/${GH_OWNER}/${GH_REPO} \
+        --token "${GH_TOKEN}" \
+        --labels ${LABELS} \
+        --name runner-${PR_NUMBER}
 
-      # Prepare input data directory
-      mkdir -p $HOME/data
-      cd $HOME/data
-      wget -q -O lowresMRI.zip "https://files.ca-1.osf.io/v1/resources/k2nme/providers/osfstorage/66759a948dfe890189cb7178/?zip="
-      unzip -q lowresMRI.zip -d lowresMRI
-
-      # Run wet run test
-      cd $HOME/repo
-      ./hippunfold/run.py ../data/lowresMRI derivatives/ participant --participant-label 01 --modality T1w --cores all 
+      # Install and start as a service
+      ./svc.sh install
+      ./svc.sh start
 
 runcmd:
-  - apt-get update
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y curl git wget unzip
-  - useradd -m runner || true
-  - chown -R runner:runner /mnt
-  - cp /tmp/start.sh /mnt/start.sh
-  - chown runner:runner /mnt/start.sh
-  - su - runner -c "/mnt/start.sh"
+  - su - ubuntu -c "/home/ubuntu/setup-runner.sh"
